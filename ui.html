@@ -1,0 +1,42 @@
+<div class="color-picker">
+    <div class="color-preview"></div>
+    <div class="color-spectrum">
+        <canvas id="spectrum-canvas"></canvas>
+    </div>
+    <input type="text" id="name" placeholder="your color name" />
+    <input type="text" id="hex" placeholder="Write HEX color" />
+</div>
+<button id="create">Create</button>
+<button id="cancel">Cancel</button>
+<style>
+    * {
+        font-family: Roboto;
+    }
+    body {
+        margin: 0;
+    }
+    .color-picker {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+    }
+    .color-preview {
+        background: darkblue;
+        height: 200px;
+        width: 100%;
+    }
+</style>
+<script>
+
+document.getElementById('create').onclick = () => {
+    const textbox = document.getElementById('hex');
+    const nameTextBox = document.getElementById('name');
+
+    parent.postMessage({ pluginMessage: { type: 'create', hex: textbox.value, name: nameTextBox.value } }, '*');
+}
+
+document.getElementById('cancel').onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
+}
+
+</script>
