@@ -2,6 +2,7 @@ import generateColorVariant from "./utils/materialPalette";
 import contrastCheck from "./utils/ContrastCheck";
 import {IColor} from "./interfaces/iColor";
 import {IColorVariant} from "./interfaces/iColorVariant";
+import tinycolor from "tinycolor2";
 
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__, { width: 360, height: 480});
@@ -15,8 +16,18 @@ console.log(variants);*/
 const _WIDTH_ = 430;
 const _HEIGHT_ = 64;
 
-function hexToRgb(color: { R: number, G: number, B: number, A: number }) {
-  return { r: color.R / 255 , g: color.G / 255 , b: color.B / 255 };
+function hexToRgb(color: { r: number, g: number, b: number, a: number }) {
+  return { r: color.r / 255 , g: color.g / 255 , b: color.b / 255 };
+}
+
+function collectionExistsByName(name:string): boolean {
+  const localCollections = figma.variables.getLocalVariableCollections();
+  return localCollections.find(el => el.name === name )? true: false;
+}
+
+function getCollectionByName(name: string): VariableCollection | undefined {
+  const localCollections = figma.variables.getLocalVariableCollections();
+  return localCollections.find( el => el.name === name );
 }
 
 async function createTextForFrame(item: IColor | IColorVariant, parentNode: FrameNode | GroupNode, fontSize: number = 16){
@@ -70,6 +81,20 @@ figma.ui.onmessage = msg => {
         parentColor.resize(_WIDTH_, _HEIGHT_);
         parentColor.horizontalPadding = parentColor.verticalPadding = 16;
 
+        let localCollection = getCollectionByName('Color primitives');
+        //Create collection if not created
+        if(!collectionExistsByName('Color primitives'))
+          localCollection = figma.variables.createVariableCollection('Color primitives');
+
+        //Add base color to collection
+        if (!localCollection)
+          return;
+
+        const modeId = localCollection.modes[0].modeId;
+        const colorVariable = figma.variables.createVariable(`${parentColor.name}/${parentColor.name}`, localCollection.id, "COLOR");
+        colorVariable.setValueForMode(modeId, hexToRgb(variants.rgb));
+
+
         createTextForFrame(variants, parentColor, 14).then(()=>{
           colorFrame.appendChild(parentColor);
         });
@@ -86,6 +111,11 @@ figma.ui.onmessage = msg => {
           element.resize(_WIDTH_, _HEIGHT_);
           element.horizontalPadding = element.verticalPadding = 16;
 
+          if (localCollection) {
+            const colorVariable = figma.variables.createVariable(`${parentColor.name}/${element.name}`, localCollection.id, "COLOR");
+            colorVariable.setValueForMode(modeId, hexToRgb(variant.rgb));
+          }
+
           createTextForFrame(variant, element, 14).then(()=>{
             colorFrame.appendChild(element);
           });
@@ -94,21 +124,40 @@ figma.ui.onmessage = msg => {
         // Add to page
         figma.currentPage.appendChild(colorFrame);
       }
-
-      console.log(variants);
     }break;
-    case 'create-rectangles': {
-      const nodes: SceneNode[] = [];
-      for (let i = 0; i < msg.count; i++) {
-        const rect = figma.createRectangle();
-        rect.x = i * 150;
-        rect.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-        figma.currentPage.appendChild(rect);
-        nodes.push(rect);
-      }
-      figma.currentPage.selection = nodes;
-      figma.viewport.scrollAndZoomIntoView(nodes);
-    }break;
+    case 'tinycolorHSL':
+      if(msg['hsl'])
+        figma.ui.postMessage({type: 'tinyHSL', data: tinycolor(msg['hsl'])});
+      break;
+    case 'tinycolorHSLtoHEX':
+      let colorHex = tinycolor(msg['hsl']);
+      figma.ui.postMessage({type: 'tinyHSLtoHEX', data: colorHex.toHex()});
+      break;
+    case 'tinycolorHEXtoHSL':
+      let color = tinycolor(msg.data);
+      figma.ui.postMessage({type: 'tinyHEXtoHSL', data: color.toHsl()});
+      break;
+    case 'tinycolorHEXtoHSV':
+      let _color = tinycolor(msg.data);
+      figma.ui.postMessage({type: 'tinyHEXtoHSV', data: _color.toHsv()});
+      break;
+    case 'tinycolor':
+      figma.ui.postMessage({type: 'tinycolor', data: tinycolor(msg.data)});
+      break;
+    case 'tinycolorToHue':
+      let colorToHue = tinycolor(msg.data);
+      let hueString = tinycolor('hsl '+ colorToHue.toHsl().h + ' 1 .5').toHslString();
+      figma.ui.postMessage({type: 'tinyColorToHue', data: hueString})
+      break;
+    case 'tinycolorToPos':
+      let colorToPos = tinycolor(msg.color);
+      let hsl = colorToPos.toHsl();
+      let hsv = colorToPos.toHsv();
+      let x = msg.spectrumWidth * hsv.s;
+      let y = msg.spectrumHeight * (1 - hsv.v);
+      //var hueY = hueRect.height - ((hue / 360) * hueRect.height);
+      figma.ui.postMessage({ type: 'tinyColorToPos', hsl: hsl, x: x, y: y, color: colorToPos });
+      break;
     default:
       figma.closePlugin();
   }

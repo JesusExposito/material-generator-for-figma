@@ -1,42 +1,507 @@
 <div class="color-picker">
-    <div class="color-preview"></div>
+    <div class="color-preview" id="color-preview"></div>
     <div class="color-spectrum">
+        <button id="spectrum-cursor" class="color-cursor"></button>
         <canvas id="spectrum-canvas"></canvas>
     </div>
-    <input type="text" id="name" placeholder="your color name" />
-    <input type="text" id="hex" placeholder="Write HEX color" />
 </div>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
+<div class="inputs-container">
+    <label class="pure-material-textfield-outlined">
+        <input placeholder=" " id="hex">
+        <span>HEX</span>
+    </label>
+    <div class="grid-secondary-inputs" style="display: none">
+        <label class="pure-material-textfield-outlined">
+            <input placeholder=" " id="rgb">
+            <span>RGB</span>
+        </label>
+        <label class="pure-material-textfield-outlined">
+            <input placeholder=" " id="hsl">
+            <span>HSL</span>
+        </label>
+        <label class="pure-material-textfield-outlined">
+            <input placeholder=" " id="hsb">
+            <span>HSB</span>
+        </label>
+    </div>
+    <label class="pure-material-textfield-outlined mt">
+        <input placeholder=" " id="name">
+        <span>Color name *</span>
+    </label>
+</div>
+<div class="footer">
+    <div class="buttons-grid">
+        <button id="cancel" class="btn">Cancel</button>
+        <button id="create" class="btn btn-primary">Create</button>
+    </div>
+</div>
+<!--Global styles-->
 <style>
     * {
         font-family: Roboto;
     }
     body {
-        margin: 0;
+        margin: 4px;
+    }
+    .mt {
+        margin-top: 8px;
+    }
+    .footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 360px;
+        border-top: thin solid lightgray;
+    }
+    .buttons-grid {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .btn {
+        padding: 8px 14px;
+        border: 0px solid transparent;
+        border-radius: 2px;
+        font-size: 14px;
+    }
+    .btn:hover {
+        background: #dadada;
+        cursor: pointer;
+    }
+    .btn.btn-primary {
+        background: #0075fb;
+        color: white;
+    }
+    .btn.btn-primary:hover {
+        background: #0250a9;
+    }
+    .inputs-container {
+        padding: 16px;
+    }
+    .grid-secondary-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
     }
     .color-picker {
         width: 100%;
         display: grid;
-        grid-template-columns: 1fr 2fr;
+        grid-template-columns: 112px 1fr;
     }
     .color-preview {
-        background: darkblue;
-        height: 200px;
+        background: white;
+        height: 240px;
         width: 100%;
     }
 </style>
-<script>
+<!--Material input -->
+<style>
+    .pure-material-textfield-outlined {
+        --pure-material-safari-helper1: rgb(var(--pure-material-primary-rgb, 100, 100, 100));
+        position: relative;
+        display: inline-block;
+        padding-top: 6px;
+        font-family: var(--pure-material-font, "Roboto", "Segoe UI", BlinkMacSystemFont, system-ui, -apple-system);
+        font-size: 12px;
+        line-height: 1.5;
+        overflow: hidden;
+        width: 100%;
+    }
 
-document.getElementById('create').onclick = () => {
+    /* Input, Textarea */
+    .pure-material-textfield-outlined > input,
+    .pure-material-textfield-outlined > textarea {
+        box-sizing: border-box;
+        margin: 0;
+        /* Safari */
+        border: 1px solid rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.3);
+        border-top-color: transparent;
+        border-radius: 4px;
+        padding: 10px 9px 10px;
+        width: 100%;
+        height: inherit;
+        color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.87);
+        background-color: transparent;
+        box-shadow: none; /* Firefox */
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        caret-color: rgb(var(--pure-material-primary-rgb, 100, 100, 100));
+        transition: border 0.2s, box-shadow 0.2s;
+    }
+
+    /* Span */
+    .pure-material-textfield-outlined > input + span,
+    .pure-material-textfield-outlined > textarea + span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: flex;
+        border-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.3);
+        width: 100%;
+        max-height: 100%;
+        color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.3);
+        font-size: 75%;
+        line-height: 15px;
+        cursor: text;
+        transition: color 0.2s, font-size 0.2s, line-height 0.2s;
+    }
+
+    /* Corners */
+    .pure-material-textfield-outlined > input + span::before,
+    .pure-material-textfield-outlined > input + span::after,
+    .pure-material-textfield-outlined > textarea + span::before,
+    .pure-material-textfield-outlined > textarea + span::after {
+        content: "";
+        display: block;
+        box-sizing: border-box;
+        margin-top: 6px;
+        border-top: solid 1px;
+        border-top-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.3);
+        min-width: 10px;
+        height: 8px;
+        pointer-events: none;
+        box-shadow: inset 0 1px transparent;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .pure-material-textfield-outlined > input + span::before,
+    .pure-material-textfield-outlined > textarea + span::before {
+        margin-right: 4px;
+        border-left: solid 1px transparent;
+        border-radius: 4px 0;
+    }
+
+    .pure-material-textfield-outlined > input + span::after,
+    .pure-material-textfield-outlined > textarea + span::after {
+        flex-grow: 1;
+        margin-left: 4px;
+        border-right: solid 1px transparent;
+        border-radius: 0 4px;
+    }
+
+    /* Hover */
+    .pure-material-textfield-outlined:hover > input,
+    .pure-material-textfield-outlined:hover > textarea {
+        border-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.87);
+        border-top-color: transparent;
+    }
+
+    .pure-material-textfield-outlined:hover > input + span::before,
+    .pure-material-textfield-outlined:hover > textarea + span::before,
+    .pure-material-textfield-outlined:hover > input + span::after,
+    .pure-material-textfield-outlined:hover > textarea + span::after {
+        border-top-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.87);
+    }
+
+    .pure-material-textfield-outlined:hover > input:not(:focus):placeholder-shown,
+    .pure-material-textfield-outlined:hover > textarea:not(:focus):placeholder-shown {
+        border-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.87);
+    }
+
+    /* Placeholder-shown */
+    .pure-material-textfield-outlined > input:not(:focus):placeholder-shown,
+    .pure-material-textfield-outlined > textarea:not(:focus):placeholder-shown {
+        border-top-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.3);
+    }
+
+    .pure-material-textfield-outlined > input:not(:focus):placeholder-shown + span,
+    .pure-material-textfield-outlined > textarea:not(:focus):placeholder-shown + span {
+        font-size: inherit;
+        line-height: 50px;
+    }
+
+    .pure-material-textfield-outlined > input:not(:focus):placeholder-shown + span::before,
+    .pure-material-textfield-outlined > textarea:not(:focus):placeholder-shown + span::before,
+    .pure-material-textfield-outlined > input:not(:focus):placeholder-shown + span::after,
+    .pure-material-textfield-outlined > textarea:not(:focus):placeholder-shown + span::after {
+        border-top-color: transparent;
+    }
+
+    /* Focus */
+    .pure-material-textfield-outlined > input:focus,
+    .pure-material-textfield-outlined > textarea:focus {
+        border-color: rgb(var(--pure-material-primary-rgb, 100, 100, 100));
+        border-top-color: transparent;
+        box-shadow: inset 1px 0 var(--pure-material-safari-helper1), inset -1px 0 var(--pure-material-safari-helper1), inset 0 -1px var(--pure-material-safari-helper1);
+        outline: none;
+    }
+
+    .pure-material-textfield-outlined > input:focus + span,
+    .pure-material-textfield-outlined > textarea:focus + span {
+        color: rgb(var(--pure-material-primary-rgb, 100, 100, 100));
+    }
+
+    .pure-material-textfield-outlined > input:focus + span::before,
+    .pure-material-textfield-outlined > input:focus + span::after,
+    .pure-material-textfield-outlined > textarea:focus + span::before,
+    .pure-material-textfield-outlined > textarea:focus + span::after {
+        border-top-color: var(--pure-material-safari-helper1) !important;
+        box-shadow: inset 0 1px var(--pure-material-safari-helper1);
+    }
+
+    /* Disabled */
+    .pure-material-textfield-outlined > input:disabled,
+    .pure-material-textfield-outlined > input:disabled + span,
+    .pure-material-textfield-outlined > textarea:disabled,
+    .pure-material-textfield-outlined > textarea:disabled + span {
+        border-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38) !important;
+        border-top-color: transparent !important;
+        color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38);
+        pointer-events: none;
+    }
+
+    .pure-material-textfield-outlined > input:disabled + span::before,
+    .pure-material-textfield-outlined > input:disabled + span::after,
+    .pure-material-textfield-outlined > textarea:disabled + span::before,
+    .pure-material-textfield-outlined > textarea:disabled + span::after {
+        border-top-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38) !important;
+    }
+
+    .pure-material-textfield-outlined > input:disabled:placeholder-shown,
+    .pure-material-textfield-outlined > input:disabled:placeholder-shown + span,
+    .pure-material-textfield-outlined > textarea:disabled:placeholder-shown,
+    .pure-material-textfield-outlined > textarea:disabled:placeholder-shown + span {
+        border-top-color: rgba(var(--pure-material-onsurface-rgb, 0, 0, 0), 0.38) !important;
+    }
+
+    .pure-material-textfield-outlined > input:disabled:placeholder-shown + span::before,
+    .pure-material-textfield-outlined > input:disabled:placeholder-shown + span::after,
+    .pure-material-textfield-outlined > textarea:disabled:placeholder-shown + span::before,
+    .pure-material-textfield-outlined > textarea:disabled:placeholder-shown + span::after {
+        border-top-color: transparent !important;
+    }
+
+    /* Faster transition in Safari for less noticable fractional font-size issue */
+    @media not all and (min-resolution:.001dpcm) {
+        @supports (-webkit-appearance:none) {
+            .pure-material-textfield-outlined > input,
+            .pure-material-textfield-outlined > input + span,
+            .pure-material-textfield-outlined > textarea,
+            .pure-material-textfield-outlined > textarea + span,
+            .pure-material-textfield-outlined > input + span::before,
+            .pure-material-textfield-outlined > input + span::after,
+            .pure-material-textfield-outlined > textarea + span::before,
+            .pure-material-textfield-outlined > textarea + span::after {
+                transition-duration: 0.1s;
+            }
+        }
+    }
+</style>
+<!--Style for spectrum-->
+<style>
+    .color-cursor {
+        border-radius: 100%;
+        background: #ccc;
+        box-sizing: border-box;
+        position: absolute;
+        pointer-events: none;
+        z-index: 2;
+        border: 2px solid #fff;
+        transition: all 0.2s ease;
+    }
+    .color-cursor.dragging {
+        transition: none;
+    }
+    .color-cursor#spectrum-cursor {
+        padding: 0;
+        width: 12px;
+        height: 12px;
+        margin-left: -6px;
+        margin-top: -6px;
+        top: 0;
+        left: 0;
+    }
+
+    .color-spectrum {
+        position: relative;
+        overflow: hidden;
+    }
+
+    #spectrum-canvas {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #ccc;
+    }
+</style>
+<script type="text/javascript">
+    //Create canvas
+    let spectrumCanvas = document.getElementById('spectrum-canvas');
+    let colorIndicator = document.getElementById('color-preview');
+    let spectrumCtx = spectrumCanvas.getContext('2d');
+    let spectrumCursor = document.getElementById('spectrum-cursor');
+    let spectrumRect = spectrumCanvas.getBoundingClientRect();
+
+    let hexField = document.getElementById('hex');
+    let rgbField = document.getElementById('rgb');
+    let hslField = document.getElementById('hsl');
+    let hsbField = document.getElementById('hsb');
+    let currentColor = '';
+    let hue = 0;
+    let saturation = 1;
+    let lightness = .5;
+
+    //Update hex field
+    hexField.addEventListener('change', function(){
+        let color;
+        parent.postMessage({ pluginMessage: { type: 'tinycolor', data: hexField.value.toUpperCase()  } }, '*');
+        window.onmessage = (event) => {
+            if(event.data.pluginMessage.type === 'tinycolor') {
+                color = event.data.pluginMessage.data;
+                colorToPos(color);
+            }
+        };
+    })
+
+    function colorToPos(color){
+        parent.postMessage({ pluginMessage: {
+                type: 'tinycolorToPos',
+                color: color._originalInput,
+                spectrumWidth: spectrumRect.width,
+                spectrumHeight: spectrumRect.height,
+        }}, '*');
+        window.onmessage = (event) => {
+            if(event.data.pluginMessage.type === 'tinyColorToPos'){
+                let val = event.data.pluginMessage;
+                hue = val.hsl.h;
+                updateSpectrumCursor(val.x,val.y);
+                //updateHueCursor(hueY);
+                setCurrentColor(val.hsl);
+                parent.postMessage({ pluginMessage: { type: 'tinycolorToHue', data: color._originalInput } }, '*' );
+                let hueString;
+                window.onmessage = (event) => {
+                    if(event.data.pluginMessage.type === 'tinyColorToHue') {
+                        hueString = event.data.pluginMessage.data;
+                        createShadeSpectrum(hueString);
+                    }
+                }
+            }else {
+                console.warn('Fuck this shit')
+            }
+        }
+    }
+
+    function colorToHue(color){
+        parent.postMessage({ pluginMessage: { type: 'tinycolorToHue', data: color._originalInput } }, '*' )
+        let hueString;
+        window.onmessage = (event) => {
+            if(event.data.pluginMessage.type === 'tinyColorToHue') {
+                hueString = event.data.pluginMessage.data;
+                return hueString;
+            }
+        }
+    }
+
+    function setCurrentColor(color){
+        currentColor = color;
+        parent.postMessage({ pluginMessage: { type: 'tinycolorHSLtoHEX', hsl: 'hsl ' + hue + ' ' + saturation + ' ' + lightness  } }, '*');
+        let currentColorHex;
+        window.onmessage = (event) => {
+            if(event.data.pluginMessage.type === 'tinyHSLtoHEX') {
+                currentColorHex = event.data.pluginMessage.data;
+                colorIndicator.style.backgroundColor = currentColorHex;
+                spectrumCursor.style.backgroundColor = currentColorHex;
+                hexField.value = currentColorHex.toUpperCase();
+                //hueCursor.style.backgroundColor = 'hsl('+ color.toHsl().h +', 100%, 50%)';
+            }
+        };
+    };
+
+    function createShadeSpectrum(color) {
+        let canvas = spectrumCanvas;
+        let ctx = spectrumCtx;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if(!color) color = '#f00';
+        console.log(color);
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let whiteGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        whiteGradient.addColorStop(0, "#fff");
+        whiteGradient.addColorStop(1, "transparent");
+        ctx.fillStyle = whiteGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let blackGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        blackGradient.addColorStop(0, "transparent");
+        blackGradient.addColorStop(1, "#000");
+        ctx.fillStyle = blackGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        canvas.addEventListener('mousedown', function(e){
+            startGetSpectrumColor(e);
+        });
+    };
+
+    function updateSpectrumCursor(x, y){
+        spectrumCursor.style.left = x + 'px';
+        spectrumCursor.style.top = y + 'px';
+    };
+
+    let startGetSpectrumColor = function(e) {
+        getSpectrumColor(e);
+        spectrumCursor.classList.add('dragging');
+        window.addEventListener('mousemove', getSpectrumColor);
+        window.addEventListener('mouseup', endGetSpectrumColor);
+    };
+
+    function getSpectrumColor(e) {
+        // got some help here - http://stackoverflow.com/questions/23520909/get-hsl-value-given-x-y-and-hue
+        e.preventDefault();
+        //get x/y coordinates
+        let x = e.pageX - spectrumRect.left;
+        let y = e.pageY - spectrumRect.top;
+        //constrain x max
+        if(x > spectrumRect.width){ x = spectrumRect.width}
+        if(x < 0){ x = 0}
+        if(y > spectrumRect.height){ y = spectrumRect.height}
+        if(y < 0){ y = .1}
+        //convert between hsv and hsl
+        let xRatio = x / spectrumRect.width * 100;
+        let yRatio = y / spectrumRect.height * 100;
+        let hsvValue = 1 - (yRatio / 100);
+        let hsvSaturation = xRatio / 100;
+        lightness = (hsvValue / 2) * (2 - hsvSaturation);
+        saturation = (hsvValue * hsvSaturation) / (1 - Math.abs(2 * lightness - 1));
+        //let color = tinycolor('hsl ' + hue + ' ' + saturation + ' ' + lightness);
+        parent.postMessage({ pluginMessage: { type: 'tinycolorHSL', hsl: 'hsl ' + hue + ' ' + saturation + ' ' + lightness  } }, '*');
+        let color;
+        window.onmessage = (event) => {
+            if(event.data.pluginMessage.type === 'tinyHSL') {
+                color = event.data.pluginMessage.data;
+                setCurrentColor(color);
+                // setColorValues(color);
+            }
+        };
+        updateSpectrumCursor(x,y);
+    };
+
+    function endGetSpectrumColor(e){
+        spectrumCursor.classList.remove('dragging');
+        window.removeEventListener('mousemove', getSpectrumColor);
+    };
+
+    window.addEventListener('resize', function(){
+        spectrumRect = spectrumCanvas.getBoundingClientRect();
+    });
+
+    createShadeSpectrum();
+    //End
+
+    document.getElementById('create').onclick = () => {
     const textbox = document.getElementById('hex');
     const nameTextBox = document.getElementById('name');
-
     parent.postMessage({ pluginMessage: { type: 'create', hex: textbox.value, name: nameTextBox.value } }, '*');
-}
-
-document.getElementById('cancel').onclick = () => {
+    }
+    document.getElementById('cancel').onclick = () => {
     parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+    }
 
 </script>

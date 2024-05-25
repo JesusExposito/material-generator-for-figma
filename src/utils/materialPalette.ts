@@ -32,7 +32,7 @@ export default function generateColorVariant(name: string, colorHex: string): IC
         const variant: IColorVariant = {
             name: variantName,
             hex: variantHex,
-            rgb: { R: rgb.r, G: rgb.g, B: rgb.b , A: rgb.a }
+            rgb: { r: rgb.r, g: rgb.g, b: rgb.b , a: rgb.a }
         };
         variants.push(variant);
     }
@@ -40,7 +40,7 @@ export default function generateColorVariant(name: string, colorHex: string): IC
     const finalColor: IColor = {
         name: name,
         hex: colorHex,
-        rgb:{ R: colorRGB.r, G: colorRGB.g, B: colorRGB.b, A: colorRGB.a },
+        rgb:{ r: colorRGB.r, g: colorRGB.g, b: colorRGB.b, a: colorRGB.a },
         variants: variants
     };
 
